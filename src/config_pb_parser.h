@@ -2,28 +2,25 @@
 #include <fstream>
 #include <chrono>
 #include <google/protobuf/text_format.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 #include "gen/dsp_test_sweep.pb.h"
 
 class ConfigPbParser {
   public:
-    ConfigPbParser(const char* config_path){
-      std::ifstream cfg(config_path);
+    ConfigPbParser(const char* config_path) : path(config_path){}
+
+    void parseAndSaveDataTextProto(){
+      cfg.open(path);
       if (!cfg.is_open()) {
         std::cerr << "Не удалось открыть файл!" << std::endl;
         return;
       }
 
-      std::string textproto_input((std::istreambuf_iterator<char>(cfg)),
-                                   std::istreambuf_iterator<char>());
-      cfg.close();
-
-      parseAndSaveData(textproto_input);
-    }
-
-    void parseAndSaveData(std::string& textproto_input){
+      google::protobuf::io::IstreamInputStream stream(&cfg);
       auto start = std::chrono::high_resolution_clock::now();
 
-      if (!google::protobuf::TextFormat::ParseFromString(textproto_input, &main_cfg)) {
+
+      if (!google::protobuf::TextFormat::Parse(&stream, &main_cfg)) {
         std::cerr << "Ошибка парсинга .textproto файла!" << std::endl;
         return;
       }
@@ -43,14 +40,34 @@ class ConfigPbParser {
 
 
       auto end = std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-      std::cout << "\nВремя выполнения Protobuf Parsing: " << duration.count() << " мс" << std::endl;
+      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+      std::cout << "\nВремя выполнения Protobuf Parsing (TextProto): " << duration.count() << " мкс" << std::endl;
 
       // std::cout << "\nARRAY: " << in_mux_rx[3];
     }
 
+    void parseAndSaveDataBinaryProto(){
+      cfg.open(path, std::ios::binary);
+      if (!cfg.is_open()) {
+        std::cerr << "Не удалось открыть файл!" << std::endl;
+        return;
+      }
+      auto start = std::chrono::high_resolution_clock::now();
+
+      if (!main_cfg.ParseFromIstream(&cfg)) {
+        std::cerr << "Ошибка парсинга .pb файла!" << std::endl;
+        return;
+      }
+
+      auto end = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+      std::cout << "\nВремя выполнения Protobuf Parsing (Binary): " << duration.count() << " мкс" << std::endl;
+    }
+
 
   private:
+    const char* path;
+    std::ifstream cfg;
     MainConfig main_cfg;
 
     // Showed below only for saving test, use SAME STRUCTURE FROM .PROTO

@@ -38,7 +38,7 @@ message Control {
   SyncPulseMux sync_pulse_mux = 8;
   TxOutputMux tx_output_mux = 9;
 
-  repeated InputMux input_mux_rx = 10; 
+  repeated InputMux input_mux_rx = 10;
   /* Array, max size 64 MB (Safe limit, 2 GB without limits) 
    * But atomic, cannot give only one field
    * For Non-atomic fields use MAP

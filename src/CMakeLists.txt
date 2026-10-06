@@ -30,6 +30,10 @@ add_executable(protobuf_examples
   ${PROTO_HEADERS}
 )
 
+set(TEXT_CONFIG "${CMAKE_CURRENT_SOURCE_DIR}/config_dsp_test_sweep.textproto")
+set(BIN_CONFIG  "${CMAKE_CURRENT_BINARY_DIR}/config_dsp_test_sweep.pb")
+set(PROTO_MESSAGE "MainConfig")
+
 target_include_directories(protobuf_examples PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/common
   ${CMAKE_CURRENT_SOURCE_DIR}/server
