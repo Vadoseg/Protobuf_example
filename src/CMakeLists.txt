@@ -23,7 +23,7 @@ file(GLOB_RECURSE PROTO_HEADERS "*.pb.h")
 
 source_group("Gen Protos" FILES ${PROTO_SOURCES} ${PROTO_HEADERS})
 
-add_executable(protobuf_examples
+add_executable(protobuf_parse_example
   ${SOURCES}
   ${HEADERS}
   ${PROTO_SOURCES}
@@ -34,17 +34,17 @@ set(TEXT_CONFIG "${CMAKE_CURRENT_SOURCE_DIR}/config_dsp_test_sweep.textproto")
 set(BIN_CONFIG  "${CMAKE_CURRENT_BINARY_DIR}/config_dsp_test_sweep.pb")
 set(PROTO_MESSAGE "MainConfig")
 
-target_include_directories(protobuf_examples PRIVATE
+target_include_directories(protobuf_parse_example PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/common
   ${CMAKE_CURRENT_SOURCE_DIR}/server
   ${CMAKE_CURRENT_SOURCE_DIR}/proto
 )
 
-target_link_libraries(protobuf_examples PRIVATE ${PROTOBUF_LIBRARIES})
-target_compile_options(protobuf_examples PRIVATE ${PROTOBUF_CFLAGS_OTHER})
+target_link_libraries(protobuf_parse_example PRIVATE ${PROTOBUF_LIBRARIES})
+target_compile_options(protobuf_parse_example PRIVATE ${PROTOBUF_CFLAGS_OTHER})
 
 include(GNUInstallDirs)
-install(TARGETS protobuf_examples
+install(TARGETS protobuf_parse_example
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

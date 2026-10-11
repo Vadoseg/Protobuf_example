@@ -7,8 +7,6 @@
 #include <string>
 #include <vector>
 #include <array>
-
-// Заголовочные файлы RapidJSON
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 

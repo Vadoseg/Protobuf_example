@@ -172,3 +172,8 @@ message MainConfig {
   PulseBursts pulse_bursts = 4;
   SignalIds signal_ids = 5;
 }
+
+message BasicResp {
+  uint32 id = 1;
+  string message = 2;
+}
