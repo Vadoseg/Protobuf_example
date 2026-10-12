@@ -16,14 +16,17 @@ class ProtoClient : public IClient {
         parseAndSaveDataBinaryProto("../../../config_dsp_test_sweep.pb", req);
 
         int proto_size = req.ByteSizeLong();
-        std::vector<uint8_t> out_buffer(sizeof(uint32_t) + proto_size);
+        size_t total_size = sizeof(uint32_t) + proto_size;
+        if (out_buffer.capacity() < total_size)
+          out_buffer.reserve(total_size * 2);
+        out_buffer.resize(total_size);
 
         uint32_t request_size_net = htonl(static_cast<uint32_t>(proto_size));
         std::memcpy(out_buffer.data(), &request_size_net, sizeof(uint32_t));
+        req.SerializeWithCachedSizesToArray(out_buffer.data() + sizeof(uint32_t));
 
         auto start = std::chrono::high_resolution_clock::now();
-        req.SerializeToArray(out_buffer.data() + sizeof(uint32_t), proto_size);
-        writeAll(sock_fd, out_buffer.data(), out_buffer.size());
+        writeAll(sock_fd, out_buffer.data(), total_size);
 
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
@@ -68,5 +71,7 @@ class ProtoClient : public IClient {
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
       std::cout << "\nВремя выполнения Protobuf Parsing (Binary): " << duration.count() << " мкс" << std::endl;
     }
+
+    std::vector<uint8_t> out_buffer;
 
 };

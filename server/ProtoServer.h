@@ -85,12 +85,12 @@ class ProtoServer : public IServer {
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         std::cout << "\nВремя выполнения парсинга Protobuf из сети (Binary): " << duration.count() << " мкс" << std::endl;
 
-        std::cout << "[Server]: " << req;
+        std::cout << "[ProtoServer]: " << req;
 
         BasicResp resp;
         ++id;
         resp.set_id(id);
-        resp.set_message("Processed: " + std::to_string(req.ByteSizeLong()) + " bytes");
+        resp.set_message("[ProtoServer] Processed: " + std::to_string(req.ByteSizeLong()) + " bytes");
 
         int proto_size = resp.ByteSizeLong();
         std::vector<uint8_t> out_buffer(sizeof(uint32_t) + proto_size);
