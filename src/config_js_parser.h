@@ -9,7 +9,10 @@
 #include <array>
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
-
+#include "rapidjson/document.h"
+#include "rapidjson/istreamwrapper.h"
+#include "rapidjson/ostreamwrapper.h"
+#include "rapidjson/writer.h"
 struct Queue_t {
   uint32_t index;
   uint32_t tag;
@@ -299,6 +302,45 @@ class CfgJsParser {
       auto end = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
       std::cout << "\nВремя выполнения Json Parsing: " << duration.count() << " мкс" << std::endl;
+    }
+
+    void translate(const char* config_path, const char* output){
+      // 1. Чтение файла, созданного PrettyWriter
+      std::ifstream ifs(config_path);
+      if (!ifs.is_open()) {
+        std::cerr << "Не удалось открыть файл для чтения!" << std::endl;
+        return;
+      }
+
+      rapidjson::IStreamWrapper isw(ifs);
+      rapidjson::Document doc;
+      doc.ParseStream(isw);
+
+      ifs.close(); // Закрываем файл после чтения
+
+             // Проверка на ошибки парсинга
+      if (doc.HasParseError()) {
+        std::cerr << "Ошибка парсинга JSON!" << std::endl;
+        return;
+      }
+
+             // Здесь при необходимости можно изменить данные в doc
+             // doc["some_key"] = "new_value";
+
+             // 2. Запись файла с помощью обычного Writer (в одну строку)
+      std::ofstream ofs(output, std::ios::trunc); // std::ios::trunc полностью очистит файл
+      if (!ofs.is_open()) {
+        std::cerr << "Не удалось открыть файл для записи!" << std::endl;
+        return;
+      }
+
+      rapidjson::OStreamWrapper osw(ofs);
+      rapidjson::Writer<rapidjson::OStreamWrapper> writer(osw);
+      doc.Accept(writer);
+
+      std::cout << "Конфиг успешно переписан в компактном формате!" << std::endl;
+
+      return;
     }
 
     auto getQues(){ return &ques; }

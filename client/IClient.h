@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fstream>
+#include <netinet/tcp.h>
 
 class IClient {
   public:
@@ -20,6 +21,8 @@ class IClient {
         return;
       }
 
+      int flag = 1;
+      setsockopt(sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int));
       serv_addr.sin_family = AF_INET;
       serv_addr.sin_port = htons(8080);
 

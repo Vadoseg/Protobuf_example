@@ -5,6 +5,7 @@
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
+#include <chrono>
 
 class RJClient : public IClient {
   public:
@@ -16,14 +17,18 @@ class RJClient : public IClient {
       doc.SetNull();
       parseAndSaveDataRJ("../../../dsp_test_sweep.json");
 
-      auto start = std::chrono::high_resolution_clock::now();
       size_t binary_size = htonl(json_str.length());
-      writeAll(sock_fd, &binary_size, sizeof(binary_size));
-      writeAll(sock_fd, json_str.c_str(), json_str.length());
+
+      auto start = std::chrono::high_resolution_clock::now();
+      for(int i = 0; i < 10000; ++i){
+        writeAll(sock_fd, &binary_size, sizeof(binary_size));
+        writeAll(sock_fd, json_str.c_str(), json_str.length());
+      }
 
       auto end = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-      std::cout << "\nВремя выполнения отправки Json: " << duration.count() << " мкс" << std::endl;
+      std::cout << "\nВремя выполнения отправки Json: " << duration.count()/10000 << " мкс" << std::endl;
+      break;
 
       // uint32_t response_size_net = 0;
       // if (readAll(sock_fd, &response_size_net, sizeof(response_size_net))) {
@@ -40,34 +45,48 @@ class RJClient : public IClient {
       //     }
       //   }
 
-      std::cout << "Нажмите Enter для продолжения..." << std::endl;
-      std::cin.get();
+      // std::cout << "Нажмите Enter для продолжения..." << std::endl;
+      // std::cin.get();
     }
   }
 
   private:
     void parseAndSaveDataRJ(const char* path){
-      std::ifstream cfg(path);
+      std::ifstream cfg(path, std::ios::binary | std::ios::ate);
       if (!cfg.is_open()) {
         std::cerr << "Не удалось открыть файл!" << std::endl;
         return;
       }
 
-      std::stringstream buffer;
-      buffer << cfg.rdbuf();
-      json_str = buffer.str();
-      cfg.close();
+      std::streamsize size = cfg.tellg();
+      cfg.seekg(0, std::ios::beg);
 
-      auto start = std::chrono::high_resolution_clock::now();
-
-      if (doc.Parse(json_str.c_str()).HasParseError()) {
-        std::cerr << "Ошибка парсинга JSON! Код ошибки: "
-          << doc.GetParseError() << std::endl;
+      json_str = std::string(size, '\0');
+      if (!cfg.read(&json_str[0], size)) {
+        std::cerr << "Ошибка чтения файла!" << std::endl;
         return;
       }
+      cfg.close();
+
+      const int iterations = 100;
+
+      auto start = std::chrono::high_resolution_clock::now();
+      for (int i = 0; i < iterations; ++i) {
+        doc.Clear();
+        // rapidjson::MemoryStream ms(json_str.c_str(), json_str.size());
+        std::string tmp = json_str;
+
+        if (doc.ParseInsitu(tmp.data()).HasParseError()) {
+          std::cerr << "Ошибка парсинга JSON на итерации " << i
+                    << "! Код: " << doc.GetParseError() << std::endl;
+          return;
+        }
+      }
+
       auto end = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-      std::cout << "\nВремя выполнения Json Parsing: " << duration.count() << " мкс" << std::endl;
+      std::cout << "\nСреднее время RapidJSON Parsing (MemoryStream): "
+                << duration.count() / iterations << " мкс" << std::endl;
     }
 
   private:

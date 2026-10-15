@@ -1,0 +1,183 @@
+# Protobuf protocol example
+
+```protobuf
+syntax = "proto3";
+
+message Control {
+  enum InputMux {
+    INPUT_MUX_UNSPECIFIED = 0;
+    ADC_CHANNEL_0 = 1;
+    ADC_CHANNEL_1 = 2;
+    ADC_CHANNEL_6 = 7;
+    ADC_CHANNEL_7 = 8;
+  };
+
+  enum DspOutputMux {
+    DSP_MUX_UNSPECIFIED = 0;
+    DIGITAL_DOWN_CONVERTER = 1;
+    // Other values
+  }
+
+  enum SyncPulseMux {
+    SYNC_MUX_UNSPECIFIED = 0;
+    LOW_LOGIC_LEVEL = 1;
+    HIGH_LOGIC_LEVEL = 2;
+  }
+
+  enum TxOutputMux {
+    TX_MUX_UNSPECIFIED = 0;
+    DIGITAL_UP_CONVERTER = 1;
+  }
+
+  bool dsp_enabled = 1;
+  bool pilot_enabled = 2;
+  bool probe_enabled = 3;
+
+  uint32 overview_mode = 4;
+  uint32 tx2rx_latency = 5;
+  uint32 dec_factor_code = 6;
+
+  DspOutputMux dsp_output_mux = 7;
+  SyncPulseMux sync_pulse_mux = 8;
+  TxOutputMux tx_output_mux = 9;
+
+  repeated InputMux input_mux_rx = 10;
+  /* Array, max size 64 MB (Safe limit, 2 GB without limits) 
+   * But atomic, cannot give only one field
+   * For Non-atomic fields use MAP
+   */
+}
+
+message Tasks {
+  message QueueItem {
+    bool active = 1;
+    bool mode_switch = 2;
+    int32 index = 3;
+    int32 tag = 4;
+    int32 sm = 5;
+    int32 az_code = 6;
+    int32 el_code = 7;
+    int32 fr_code = 8;
+  }
+
+  bool sm_ctrl = 1;
+  bool steering_ctrl = 2;
+  repeated QueueItem que = 3;
+}
+
+message OverviewModes {
+  message PacketOfPulses {
+    bool steering_ctrl = 1;
+    bool prb_disable = 2;
+    bool active = 3;
+    bool orthogonal = 4;
+    bool qcw = 5;
+    uint32 bid = 6;
+    uint32 index = 7;
+    uint32 nor = 8;
+    double prp_us = 9;
+    double phase_deg = 10;
+    uint32 tag = 11;
+  }
+
+  message Modes {
+    uint32 mid = 1;
+    string description = 2;
+    repeated PacketOfPulses packet_of_pulses = 3;
+  }
+
+  repeated Modes overview_modes = 1;
+}
+
+message PulseBursts {
+  message PilotBurst {
+    bool active = 1;
+    bool sap = 2;
+    double amplitude_dB = 3;
+    double doppler_kHz = 4;
+    uint32 index = 5;
+    double pause_us = 6;
+    uint32 sid = 7;
+    double width_us = 8;
+  }
+
+  message ProbeBurst {
+    bool active = 1;
+    bool window = 2;
+    double fpf_ns = 3;
+    double rpf_ns = 4;
+    double if_MHz = 5;
+    uint32 index = 6;
+    double pause_us = 7;
+    uint32 sid = 8;
+    double width_us = 9;
+  }
+
+  message InnerObj {
+    uint32 bid = 1;
+    string description = 2;
+    repeated PilotBurst pilot_burst = 3;
+    repeated ProbeBurst probe_burst = 4;
+  }
+
+  repeated InnerObj burst = 1;
+}
+
+message SignalIds {
+  message Signal {
+    double scale = 1;
+    repeated double amplitude_coefs = 2;
+    repeated double phase_coefs = 3;
+    string description = 4;
+  }
+
+  message XCorr {
+    double scale = 1;
+    repeated double amplitude_coefs = 2;
+    repeated double phase_coefs = 3;
+  }
+
+  message GaussWindow {
+    double mean = 1;
+    double sigma = 2;
+    double hold = 3;
+    double stop = 4;
+  }
+
+  message Weight {
+    double scale = 1;
+    repeated double filter_coefs = 2;
+  }
+
+  message Ivm {
+    double pause_us = 1;
+    double width_us = 2;
+    double start_pause_us = 3;
+    double start_width_us = 4;
+  }
+
+  message InnerObj {
+    uint32 sid = 1;
+    Signal signal = 2;
+    XCorr x_corr = 3;
+    GaussWindow gauss_window = 4;
+    Weight weight = 5;
+    Ivm ivm = 6;
+  }
+  
+  repeated InnerObj signal_ids = 1;
+}
+
+message MainConfig {
+  Control ctrl = 1;
+  Tasks tasks = 2;
+  OverviewModes overview_modes = 3;
+  PulseBursts pulse_bursts = 4;
+  SignalIds signal_ids = 5;
+}
+
+message BasicResp {
+  uint32 id = 1;
+  string message = 2;
+}
+```

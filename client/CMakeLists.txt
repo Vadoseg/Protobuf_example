@@ -12,5 +12,7 @@ add_executable(protobuf_client_example
 )
 
 target_link_libraries(protobuf_client_example PRIVATE ${PROTOBUF_LIBRARIES})
-target_compile_options(protobuf_client_example PRIVATE ${PROTOBUF_CFLAGS_OTHER})
-
+target_compile_options(protobuf_client_example PRIVATE
+    $<$<CONFIG:Release>:-O3 -march=native -flto>
+    $<$<CONFIG:Debug>:-g -O0>
+)

@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <chrono>
 #include "dsp_test_sweep.pb.h"
 
 #include "rapidjson/document.h"
@@ -60,25 +61,34 @@ class RJServer : public IServer {
 
   private:
     void handle_client(int client_fd) {
+      int i = 0;
+      auto start = std::chrono::high_resolution_clock::now();
+      std::vector<char> buffer;
+
       while (true) {
         // sb.Clear();
+        // doc.SetNull();
         size_t network_size = 0;
         if (!readAll(client_fd, &network_size, sizeof(network_size))) break;
         size_t message_size = ntohl(network_size);
 
-        std::vector<char> buffer(message_size + 1);
-        auto start = std::chrono::high_resolution_clock::now();
+        if (buffer.size() < message_size + 1)
+          buffer.resize(message_size + 1);
         if (!readAll(client_fd, buffer.data(), message_size)) break;
 
         buffer[message_size] = '\0';
+         rapidjson::Document doc;
         doc.Parse(buffer.data());
         if (doc.HasParseError()) {
           std::cerr << "Failed to parse request json." << std::endl;
           break;
+        } else{
+          if(first_msg) {
+            start = std::chrono::high_resolution_clock::now();
+            first_msg = false;
+          }
         }
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        std::cout << "\nВремя выполнения парсинга Json из сети: " << duration.count() << " мкс" << std::endl;
+
 
         // std::cout << "[Server]: " << req;
 
@@ -94,16 +104,21 @@ class RJServer : public IServer {
 
         // resp.SerializeToArray(out_buffer.data() + sizeof(uint32_t), proto_size);
         // if (!writeAll(client_fd, out_buffer.data(), out_buffer.size())) break;
+        ++i;
+        if(i >= 10000) break;
       }
-
+      auto end = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+      std::cout << "\nВремя выполнения парсинга Json из сети: " << duration.count()/i << " мкс" << std::endl;
       close(client_fd);
       std::cout << "[RJServer] Client disconnected." << std::endl;
     }
 
   private:
+    bool first_msg = true;
     int server_fd;
     sockaddr_in address{};
-    rapidjson::Document doc;
+    // rapidjson::Document doc;
     // rapidjson::StringBuffer sb;
     // rapidjson::Writer<rapidjson::StringBuffer> writer{sb};
     uint32_t id = 0;

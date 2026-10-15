@@ -12,9 +12,10 @@ int main() {
   // cfg_parser.parseAndSaveDataTextProto();
 
   CfgJsParser cfg_js_parser("../../../dsp_test_sweep.json");
+  // cfg_js_parser.translate("../../../dsp_test_sweep.json", "../../../dsp_test_sweep_without_pw.json");
 
-  ConfigPbParser cfg_parser_bin("../../../config_dsp_test_sweep.pb");
-  cfg_parser_bin.parseAndSaveDataBinaryProto();
+  // ConfigPbParser cfg_parser_bin("../../../config_dsp_test_sweep.pb");
+  // cfg_parser_bin.parseAndSaveDataBinaryProto();
 
   google::protobuf::ShutdownProtobufLibrary();
   return 0;
